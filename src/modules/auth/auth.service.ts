@@ -28,26 +28,17 @@ export class AuthService {
 
   async register(data: RegisterDTO) {
     try {
-      const userExists = await this.userService.getUserByUserID(
-        data.userID
-      );
+      const userExists = await this.userService.getUserByUserID(data.userId);
 
-      let user;
-
-      if (!userExists) {
-        user = await this.userService.createUser(data);
-      } else {
-        Logger.log('User id already exist');
-        throw new HttpException(
-          `User with userId: ${data.userID} already exist for this profile.`,
-          HttpStatus.BAD_REQUEST,
-        );
+      if (userExists) {
+        throw new Error(`User with userId: ${data.userId} already exists.`);
       }
-      console.log(user.userId)
-      // Sending a welcome email
-    await this.mailjetService.sendEmail(
+
+      const user = await this.userService.createUser(data);
+
+      await this.mailjetService.sendEmail(
         "yevodox980@jthoven.com",
-      `${user.userId}`,
+        `${user.userId}`,
         'Welcome to Our Platform',
         'Dear user, welcome to our platform! We are happy to have you on board.',
         '<h3>Dear user, welcome to our platform!</h3><p>We are happy to have you on board.</p>',
@@ -55,7 +46,12 @@ export class AuthService {
 
       return { user };
     } catch (e) {
-
+      if (e.code === 11000) {
+        throw new HttpException(
+          `User with userId: ${data.userId} already exists.`,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
       throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
   }
@@ -64,7 +60,6 @@ export class AuthService {
     const user = await this.userService.getUserByUserID(
       payload.userId,
     );
-    console.log(payload.userId)
     if (!user)
       throw new HttpException(
         `User with email: ${payload.userId} does not exist`,
@@ -129,16 +124,12 @@ export class AuthService {
     }
 
 
-    console.log('Token:', token);
-    console.log('Current date:', new Date(Date.now()));
-
     const user = await this.userModel.findOne({
       resetPasswordToken: token,
       resetPasswordExpires: { $gte: new Date(Date.now()) },
     }).exec()
 
 
-    console.log(user)
 
     if (!user) {
       throw new Error('Invalid or expired token');
