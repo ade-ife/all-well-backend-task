@@ -100,7 +100,7 @@ export class AuthService {
       resetPasswordExpires: tokenExpires,
     });
 
-    const resetUrl = `${process.env.RESET_URL}=${token}`;
+    const resetUrl = `${process.env.RESET_URL}?token=${token}`;
     await this.mailjetService.sendEmail(
       'yevodox980@jthoven.com',
       `${user.userId}`,

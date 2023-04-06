@@ -49,7 +49,7 @@ export class AuthController {
   }
 
 
-  @Post('/reset-password')
+  @Post('/new-password')
   async resetPassword(@Body() payload: ResetPasswordDto, @Query('token') token: string) {
     try {
       payload.token = token;
